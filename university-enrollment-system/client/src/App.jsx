@@ -4,7 +4,10 @@ const money = (n) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
 async function api(path, opts) {
-  const r = await fetch('/api' + path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  // Use the Vercel environment variable, falling back to localhost for local testing
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:10000';
+  
+  const r = await fetch(`${baseUrl}/api${path}`, { headers: { 'Content-Type': 'application/json' }, ...opts });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(data.error || 'Cannot reach the server. Is the backend running?');
   return data;
