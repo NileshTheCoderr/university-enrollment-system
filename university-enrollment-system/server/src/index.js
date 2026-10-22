@@ -1,38 +1,5 @@
-import express from 'express';
-import cors from 'cors';
-import { pool } from './db.js';
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-// List instructors, optionally filtered by ?search= (name or id) and ?dept=
-app.get('/api/instructors', async (req, res, next) => {
-  try {
-    const search = String(req.query.search ?? '').trim();
-    const dept = String(req.query.dept ?? '').trim();
-    const { rows } = await pool.query(
-      `SELECT id::text AS id, name, dept_name, salary::float8 AS salary
-         FROM staff
-        WHERE ($1::text = '' OR name ILIKE '%' || $1::text || '%' OR id::text ILIKE '%' || $1::text || '%')
-          AND ($2::text = '' OR dept_name = $2::text)
-        ORDER BY name`,
-      [search, dept]
-    );
-    res.json(rows);
-  } catch (e) { next(e); }
-});
-
-// Distinct departments for the filter chips and the form suggestions
-app.get('/api/departments', async (_req, res, next) => {
-  try {
-    const { rows } = await pool.query('SELECT DISTINCT dept_name FROM staff ORDER BY dept_name');
-    res.json(rows.map((r) => r.dept_name));
-  } catch (e) { next(e); }
-});
-
 // Add an instructor. If no id is given, the next numeric id is used.
-app.post('/api/staff', async (req, res, next) => {
+app.post('/api/instructors', async (req, res, next) => {
   try {
     let { id, name, dept_name, salary } = req.body;
     name = String(name ?? '').trim();
@@ -60,19 +27,3 @@ app.post('/api/staff', async (req, res, next) => {
   }
 });
 
-app.delete('/api/instructors/:id', async (req, res, next) => {
-  try {
-    const { rowCount } = await pool.query('DELETE FROM staff WHERE id::text = $1', [req.params.id]);
-    if (!rowCount) return res.status(404).json({ error: 'Staff member not found.' });
-    res.json({ ok: true });
-  } catch (e) { next(e); }
-});
-
-app.use((err, _req, res, _next) => {
-  console.error(err);
-  res.status(500).json({ error: 'Database error: ' + err.message });
-});
-
-const port = process.env.PORT || 4000;
-app.listen(port, () => console.log(`API running on http://localhost:${port}`));
-// Force backend deployment
