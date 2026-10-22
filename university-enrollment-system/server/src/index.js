@@ -26,7 +26,7 @@ app.get('/api/instructors', async (req, res, next) => {
 // Distinct departments for the filter chips and the form suggestions
 app.get('/api/departments', async (_req, res, next) => {
   try {
-    const { rows } = await pool.query('SELECT DISTINCT dept_name FROM instructor ORDER BY dept_name');
+    const { rows } = await pool.query('SELECT DISTINCT dept_name FROM staff ORDER BY dept_name');
     res.json(rows.map((r) => r.dept_name));
   } catch (e) { next(e); }
 });
